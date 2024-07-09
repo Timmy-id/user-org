@@ -22,15 +22,13 @@ exports.register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { data, error: postError } = await supabase
-      .from('user')
-      .insert({
-        firstName,
-        lastName,
-        email,
-        password: hashedPassword,
-        phone,
-      });
+    const { error: postError } = await supabase.from('user').insert({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+      phone,
+    });
 
     if (postError)
       return res.status(400).json({
@@ -44,6 +42,21 @@ exports.register = async (req, res, next) => {
       .select('*')
       .eq('email', email)
       .single();
+
+    await supabase.from('organisation').insert({
+      name: `${firstName}'s Organisation`,
+    });
+
+    const { data: newOrg } = await supabase
+      .from('organisation')
+      .select('*')
+      .eq('name', `${firstName}'s Organisation`)
+      .single();
+
+    await supabase.from('user_organisation').insert({
+      userId: newUser.userId,
+      orgId: newOrg.orgId,
+    });
 
     const accessToken = createToken({ userId: newUser.userId });
 
@@ -62,7 +75,11 @@ exports.register = async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    return res.status(500).json({
+      status: 'Server error',
+      message: 'Internal server error',
+      statusCode: 500,
+    });
   }
 };
 
