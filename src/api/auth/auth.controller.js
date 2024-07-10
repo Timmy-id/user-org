@@ -22,13 +22,15 @@ exports.register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const { error: postError } = await supabase.from('user').insert({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-      phone,
-    });
+    const { error: postError } = await supabase.from('user').insert([
+      {
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+        phone,
+      },
+    ]);
 
     if (postError)
       return res.status(400).json({
@@ -43,9 +45,11 @@ exports.register = async (req, res, next) => {
       .eq('email', email)
       .single();
 
-    await supabase.from('organisation').insert({
-      name: `${firstName}'s Organisation`,
-    });
+    await supabase.from('organisation').insert([
+      {
+        name: `${firstName}'s Organisation`,
+      },
+    ]);
 
     const { data: newOrg } = await supabase
       .from('organisation')
@@ -53,10 +57,12 @@ exports.register = async (req, res, next) => {
       .eq('name', `${firstName}'s Organisation`)
       .single();
 
-    await supabase.from('user_organisation').insert({
-      userId: newUser.userId,
-      orgId: newOrg.orgId,
-    });
+    await supabase.from('user_organisation').insert([
+      {
+        userId: newUser.userId,
+        orgId: newOrg.orgId,
+      },
+    ]);
 
     const accessToken = createToken({ userId: newUser.userId });
 
