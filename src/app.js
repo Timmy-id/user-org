@@ -13,6 +13,9 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(logger('dev'));
 
+app.get('/', (req, res) =>
+  res.status(200).json({ status: 'success', message: 'API working' }),
+);
 app.use('/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/organisations', organisationRoutes);
